@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+requests = "*"
+boto3 = "*"
+botocore = "*"
+ldap3 = "*"
+flask = "*"
+
+[dev-packages]
+pytest = "*"
+coverage = "*"
+behave = "*"
+pylint = "==2.8.0"
+flask = "*"
+retry = "*"
+PyHamcrest = "*"
+requests-aws4auth = "*"
+
+[requires]
+python_version = "3.6.3"
