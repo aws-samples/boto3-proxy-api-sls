@@ -1,0 +1,197 @@
+app: boto3-proxy
+service: boto3-proxy
+frameworkVersion: ">=1.53.0"
+
+provider:
+  name: aws
+  runtime: python3.6
+  timeout: 900
+  logs:
+    restApi: true
+  apiGateway:
+    description: |
+      Boto3 Proxy API
+  endpointType: PRIVATE
+  vpcEndpointIds:
+    - ${self:custom.${self:custom.stage}.vpcEndpointId}
+  tracing:
+    apiGateway: true
+    lambda: true
+  stage: ${self:custom.stage}
+  deploymentBucket:
+    name: ${self:custom.${self:custom.stage}.account_name}-lambda-package-us-east-1
+    serverSideEncryption: AES256
+  resourcePolicy:
+    - Effect: Allow
+      Principal: '*'
+      Action: execute-api:Invoke
+      Resource:
+        - execute-api:/*/*/*
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - s3:ListBucket
+        - sts:AssumeRole
+        - iam:ListRoles
+        - secretsmanager:GetSecretValue
+        - ec2:DescribeRegions
+        - ssm:GetParameter
+        - xray:PutTraceSegments
+        - xray:PutTelemetryRecords
+      Resource:
+        - '*'
+
+package:
+  exclude:
+    - node_modules/**
+    - tests/**
+    - utils/test/**
+    - scripts/**
+
+custom:
+  prune:
+    automatic: true
+    number: 1
+  output:
+    file: stack-outputs.json
+  pythonRequirements:
+    dockerizePip: false
+    slim: true
+    slimPatterns:
+      - "**/*.egg-info*"
+    noDeploy: []
+    pipCmdExtraArgs:
+      - --extra-index-url=http://itsusralsp07062.test-org.com:8090
+      - --trusted-host=itsusralsp07062.test-org.com
+      - --extra-index-url https://pypi.jjapi.test-org.com/v1/itx-abp/private/dev/
+      - --extra-index-url https://pypi.jjapi.test-org.com/v1/itx-alz/shared/production/
+  stage: ${opt:stage}
+  func_prefix: ${self:service}-${self:custom.stage}
+  region: ${opt:region, self:provider.region}
+  accountId: !Ref AWS::AccountId
+  local:
+    account_name: itx-006
+    vpcEndpointId: vpce-0eea26637b80fbc88
+  dev:
+    account_name: itx-000
+    account_id: 75271
+    vpcEndpointId: vpce-0fc69
+    vpcxiam_endpoint: 'https://vpce-01227fc69-kykwwlo6.execute-api.us-east-1.vpce.amazonaws.com/dev'
+    vpcxiam_host: 'pytmyi.execute-api.us-east-1.amazonaws.com'
+    vpcxiam_scope: 'https://clx-awsapi-credential-dev.test-org.com/.default'
+    org_id: o-f83jk485va
+  qa:
+    account_name: itx-aba
+    account_id: 95125
+    vpcEndpointId: vpce-04900baf
+    vpcxiam_endpoint: 'https://vpce-04baf-v5mj0erg.execute-api.us-east-1.vpce.amazonaws.com/qa'
+    vpcxiam_host: '601dx3.execute-api.us-east-1.amazonaws.com'
+    vpcxiam_scope: 'https://clx-awsapi-credential-qa.test-org.com/.default'
+    org_id: o-nstcxtwr2w
+  prod:
+    account_name: itx-abp
+    account_id: 98625
+    vpcEndpointId: vpce-0f641feab
+    vpcxiam_endpoint: 'https://vpce-0f61feab-as20t7wi.execute-api.us-east-1.vpce.amazonaws.com/prod'
+    vpcxiam_host: 'zrz56i.execute-api.us-east-1.amazonaws.com'
+    vpcxiam_scope: 'https://clx-awsapi-credential-prod.test-org.com/.default'
+    org_id: o-jyktvg28g4
+  vpcconf:
+    local:
+      SecurityGroupIds:
+        - sg-7a8b461f
+        - sg-1a59aa7d
+      VpcId: vpc-62d83407
+      SubnetIds:
+        - subnet-9c01d8d6
+        - subnet-2a928777
+    dev:
+      SecurityGroupIds:
+        - sg-8b864be4
+        - sg-57814c38
+      VpcId: vpc-e8b15187
+      SubnetIds:
+        - subnet-d1b151be
+        - subnet-eaa1b3c6
+    qa:
+      SecurityGroupIds:
+        - sg-ecc06383
+        - sg-68c76407
+      VpcId: vpc-39fb3b58
+      SubnetIds:
+        - subnet-86fb3be7
+        - subnet-82fb3be3
+    prod:
+      SecurityGroupIds:
+        - sg-48844927
+        - sg-1a844975
+      VpcId: vpc-b66e8fd9
+      SubnetIds:
+        - subnet-9a6e8ff5
+        - subnet-6371900c
+  BOTO3_PROXY_CLIENT_ID:
+    dev: "https://clx-awsapi-boto3-proxy-dev.test-org.com"
+    qa: "https://clx-awsapi-boto3-proxy-qa.test-org.com"
+    prod: "https://clx-awsapi-boto3-proxy-prod.test-org.com"
+  BOTO3_PROXY_SECRET_NAME: "clx-awsapi-boto3-proxy"
+  LDAP_SERVER: "ldap://nadir.test-org.com:3268"
+  LDAP_USERNAME: "savchook"
+  LDAP_PASSWORD_SECRET_NAME: "ldap-password"
+  LDAP_SEARCH_BASE: "DC=test-org,DC=com"
+  LDAP_OBJECT_CLASS: "person"
+  LDAP_GROUP_NAME: "ITS-EP-APP-ITxVPCx-ITxAdmins"
+  LDAP_LOOKUP_ATTRIBUTE: "userPrincipalName"
+  MSFT_IDP_TENANT_ID: "3ac94b3302-eafda6592a35"
+  MSFT_IDP_APP_ID:
+    dev: "https://clx-awsapi-boto3-proxy-dev.test-org.com"
+    qa: "https://clx-awsapi-boto3-proxy-qa.test-org.com"
+    prod: "https://clx-awsapi-boto3-proxy-prod.test-org.com"
+  MSFT_IDP_CLIENT_ROLES: "writer"
+
+functions:
+  - boto3_proxy:
+      handler: boto3_proxy/index.handler
+      events:
+        - http:
+            path: /v1/accounts/{account-id}/regions/{region-name}/services/{boto3-service}/actions/{boto3-action}
+            method: post
+            request:
+              template:
+                application/json: '{}'
+      vpc:
+        securityGroupIds: ${self:custom.vpcconf.${self:custom.stage}.SecurityGroupIds}
+        subnetIds: ${self:custom.vpcconf.${self:custom.stage}.SubnetIds}
+      environment:
+        sddcapi_boot_dir: config
+        token_url: 'https://login.microsoftonline.com/test-org.onmicrosoft.com/oauth2/v2.0/token'
+        region: ${self:custom.region}
+        vpcxiam_scope: ${self:custom.${self:custom.stage}.vpcxiam_scope}
+        vpcxiam_endpoint: ${self:custom.${self:custom.stage}.vpcxiam_endpoint}
+        vpcxiam_host: ${self:custom.${self:custom.stage}.vpcxiam_host}
+        LDAP_SERVER: ${self:custom.LDAP_SERVER}
+        LDAP_USERNAME: ${self:custom.LDAP_USERNAME}
+        LDAP_PASSWORD_SECRET_NAME: ${self:custom.LDAP_PASSWORD_SECRET_NAME}
+        LDAP_SEARCH_BASE: ${self:custom.LDAP_SEARCH_BASE}
+        LDAP_OBJECT_CLASS: ${self:custom.LDAP_OBJECT_CLASS}
+        LDAP_GROUP_NAME: ${self:custom.LDAP_GROUP_NAME}
+        LDAP_LOOKUP_ATTRIBUTE: ${self:custom.LDAP_LOOKUP_ATTRIBUTE}
+        MSFT_IDP_TENANT_ID: ${self:custom.MSFT_IDP_TENANT_ID}
+        MSFT_IDP_APP_ID: ${self:custom.MSFT_IDP_APP_ID.${opt:stage}}
+        MSFT_IDP_CLIENT_ROLES: ${self:custom.MSFT_IDP_CLIENT_ROLES}
+        BOTO3_PROXY_CLIENT_ID: ${self:custom.BOTO3_PROXY_CLIENT_ID.${opt:stage}}
+        BOTO3_PROXY_SECRET_NAME: ${self:custom.BOTO3_PROXY_SECRET_NAME}
+
+resources:
+  Resources:
+    Boto3ProxyEC2AlloweActionsParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Description: Boto3 Proxy EC2 Allowed Actions
+        Name: /vpcx/aws/boto3-proxy/allowed-actions/ec2
+        Type: StringList
+        Value: authorize_security_group_ingress,authorize_security_group_egress,revoke_security_group_egress,revoke_security_group_ingress
+
+plugins:
+  - serverless-python-requirements
+  - serverless-stack-output
+  - serverless-prune-plugin

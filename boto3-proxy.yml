@@ -1,0 +1,138 @@
+openapi: 3.0.1
+info:
+  title: boto3_proxy
+  description: |
+    Proxy API to invoke allowed boto3 operations so that cloud agnostic exception APIs can use this API to add and remove enforcement exceptions on a resource
+    Example 1 - Call authorize-security-group-ingress Boto3 function to add a security group rule
+
+      curl --location --request PUT 'https://vpce-012710b591427fc69-kykwwlo6.execute-api.us-east-1.vpce.amazonaws.com/dev/v1/accounts/itx-046/regions/us-east-1/services/ec2/actions/authorize_security_group_ingress' \
+      --header 'authorization: Bearer ey...' \
+      --header 'Host: 9tdw14gh83.execute-api.us-east-1.amazonaws.com'
+
+  license:
+    name: test-org
+  version: 1.0.0
+servers:
+  - url: https://vpce-012710b591427fc69-kykwwlo6.execute-api.us-east-1.vpce.amazonaws.com/dev
+  - url: https://vpce-0417f07562a900baf-v5mj0erg.execute-api.us-east-1.vpce.amazonaws.com/qa
+  - url: https://vpce-0f642d37f6f41feab-as20t7wi.execute-api.us-east-1.vpce.amazonaws.com/prod
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: This API uses OAuth 2.
+      flows:
+        clientCredentials:
+          tokenUrl: https://login.microsoftonline.com/test-org.onmicrosoft.com/oauth2/v2.0/token
+          scopes:
+            read: https://clx-awsapi-boto3-proxy-dev.test-org.com/.default
+
+security:
+  - oauth2: [read]
+
+paths:
+  /v1/accounts/{account-id}/regions/{region-name}/services/{service}}/actions/{action}:
+    summary: endpoint to call the underlying Boto3 action
+    description: |
+      calls the Boto3 action for the given service and passes the parameters in the request body as input to the Boto3 function
+    post:
+      parameters:
+        - in: header
+          name: Host
+          required: true
+          description: The API id of aws API Gateway.
+          schema:
+            type: string
+          example: |
+            { Host: pygqxstmyi.execute-api.us-east-1.amazonaws.com }
+        - in: header
+          name: Authorization
+          required: true
+          description: Oauth2 token of the user or app with leading 'Bearer '
+          schema:
+            type: string
+        - in: path
+          name: account-id
+          required: true
+          description: aws account name
+          schema:
+            type: string
+          example: itx-016
+        - in: path
+          name: region-name
+          required: true
+          description: aws region name where CMK and encrypted vaults will be created
+          schema:
+            type: string
+          example: us-east-1
+        - in: path
+          name: service
+          required: true
+          description: the allowed Boto3 service to be called
+          schema:
+            type: string
+          example: ec2
+        - in: path
+          name: action
+          required: true
+          description: the allowed Boto3 action to be called for the given service
+          schema:
+            type: string
+          example: authorize-security-group-ingress
+        - in: body
+          required: true
+          description: |
+            a json object with the expected input for the Boto3 action
+          schema:
+            type: json_object
+          example: {'GroupId': 'sg-123456',
+            'IpPermissions': [ { 'IpProtocol': 'tcp', 'FromPort': 25, 'ToPort': 25, 'IpRanges': [ { 'CidrIp': '10.0.0.0/8' } ] } ]
+          }
+      responses:
+        200:
+          description: API action has been successfully completed and successfully called the underlying Boto3 action
+          content:
+            application/json:
+              examples:
+                apiCompleted:
+                  statusCode: 200,
+                  successMsg: 'API action has been successfully completed'
+        400:
+          description: At least one of the parameters in the request are invalid
+          content:
+            application/json:
+              examples:
+                serviceInvalid:
+                  errorCode: 400,
+                  errorMessage: "Service <invalid-service> is not an allowed action for the API"
+                actionInvalid:
+                  errorCode: 400,
+                  errorMessage: "Action <invalid-action> is not an allowed action for the API"
+        401:
+          description: Authentication Failed
+          content:
+            application/json:
+              examples:
+                authFailure:
+                  errorCode: 401,
+                  errorMsg: "Unauthorized"
+        404:
+          description: Account Invalid
+          content:
+            application/json:
+              examples:
+                accountInvalid:
+                  errorCode: 404
+                  errorMsg: "No account for the project_id"
+                regionInvalid:
+                  errorCode: 404
+                  errorMessage: "Please enter a valid region in the url path"
+        500:
+          description: Exception occurred
+          content:
+            application/json:
+              examples:
+                exceptionOccurred:
+                  errorCode: 500,
+                  errorMsg: "Exception details"
