@@ -1,19 +1,23 @@
-# Centralized Boto3 proxy for adhoc operations
-This project contains a centralized API that can invoke allowed boto3 client operations on AWS account resources in a multi-account AWS Organizations implementation.
+# Centralized API for adhoc Boto3-client operations in a multi-account AWS Organizations implementation
+This project contains a centralized API that can invoke a set of allowed Boto3 client operations on AWS account resources in a multi-account AWS Organizations implementation.
 
 ## Features of the API:
-* This generic API allows access to only a predefined list of boto3 actions. Those predefined actions will be stored in a parameter in Systems Manager Parameter store. 
-* One SSM parameter per service with a string  of allowed boto3 actions
-* Example param key for EC2 service= "/vpcx/aws/boto3-proxy/allowed-actions/ec2"
-* The value will be in the following format:  {"authorize_security_group_ingress","authorize_security_group_egress","revoke_security_group_egress","revoke_security_group_ingress"} 
-The values represent the actual boto3 client's function name for the service. 
+* This generic API allows access to only a predefined set of Boto3 actions. Those predefined actions will be stored in a parameter in Systems Manager Parameter store. 
+* One SSM parameter per service is used to store a comma separated string of allowed Boto3 actions
+* Example SSM param key for EC2 service= "/vpcx/aws/boto3-proxy/allowed-actions/ec2"
+* The SSM param value will be in the following format:  {"authorize_security_group_ingress","authorize_security_group_egress","revoke_security_group_egress","revoke_security_group_ingress"} 
+The values represent the actual Boto3 client's function name for the service. 
 * If the parameter entry is missing, "invalid service" error message will be returned
 
-## Usecase: 
-Centralized governance and compliance of accounts is enforced by ISRM security guidelines, cloud conformity governance rules, and other best practices on AWS resources. 
-Application teams/end customers require additional security group rule(s) which need to be configured to enable communication for applications with other aws resources. 
-This API allows automation of creating exception inbound or outbound security group rules in any given account once an exception is approved.
+## Specific use-case implemented: 
+Centralized governance and compliance of AWS accounts in an organization is enforced by ISRM security guidelines, cloud conformity governance rules, and other best practices on AWS resources. 
+Application teams/end-customers require additional security group rule(s) which need to be configured to enable communication for applications with other aws resources. 
+This API allows automation of creating exception inbound or outbound security group rules in any given account once the exception is approved.
 
+## Architecture
+![Architecture2](docs/arch.png)
+
+## Directory structure
 ```
 .
 ├── README.md                           <-- This documentation file
@@ -24,37 +28,9 @@ This API allows automation of creating exception inbound or outbound security gr
 ├── Pipfile                             <-- Python dependencies
 └── serverless.yml                      <-- Serverless application definition file
 ```
-## Pre-requisites
-```shell script
-Install NodeJS
-Install Serverless framework
-Install Python 3.6, Pip3
-```
-
-## Test
-```shell script
-#Install Python requirements
-pip3 install -r requirements.txt
-
-pytest ./
-```
-
-## Deployment
-```shell script
-# Install serverless framework dependencies from package.json
-npm i
-
-# Deploy API
-serverless deploy -s dev
-```
-
-## Integration Test
-```
-behave boto3_proxy/tests/bdd/
-```
 
 ## OpenAPI Spec
-The OpenAPI spec for the API is located at [boto3-proxy.yml](boto3-proxy.yml)
+The OpenAPI spec for the API is located at [docs/boto3-proxy.yml](docs/boto3-proxy.yml)
 
 ## Example Usage
 
@@ -96,6 +72,48 @@ curl -X POST
     ],
 }
      https://vpce-01227fc69-kykwwlo6.execute-api.us-east-1.vpce.amazonaws.com/dev/v1/accounts/itx-016/regions/us-east-1/services/ec2/actions/authorize_egress
+```
+
+---
+## Local env setup and configuration
+
+```
+# Install Python3.6, Pip, Pipenv, Nodejs >= v14
+
+# Install python dependencies
+pipenv install
+pipenv shell
+
+# Install Serverless framework
+npm i -g serverless
+
+# Install Serverless dependencies
+cd boto3-proxy-api-sls
+npm i
+
+# Install serverless plugins; python 3.6 should already be installed
+serverless plugin install -n serverless-python-requirements
+serverless plugin install -n serverless-deployment-bucket
+
+# Configure AWS named profile
+aws configure --profile default 
+
+```
+
+## Test
+```shell script
+pytest ./
+```
+
+## Deployment
+```shell script
+# Deploy API
+serverless deploy -s dev --aws-profile default
+```
+
+## Integration Test
+```
+behave boto3_proxy/tests/bdd/
 ```
 
 ## License
