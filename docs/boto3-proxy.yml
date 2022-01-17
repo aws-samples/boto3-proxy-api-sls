@@ -10,7 +10,7 @@ info:
       --header 'Host: 9tdw14gh83.execute-api.us-east-1.amazonaws.com'
 
   license:
-    name: test-org
+    name: example
   version: 1.0.0
 servers:
   - url: https://vpce-012710b591427fc69-kykwwlo6.execute-api.us-east-1.vpce.amazonaws.com/dev
@@ -24,9 +24,9 @@ components:
       description: This API uses OAuth 2.
       flows:
         clientCredentials:
-          tokenUrl: https://login.microsoftonline.com/test-org.onmicrosoft.com/oauth2/v2.0/token
+          tokenUrl: https://login.microsoftonline.com/example.onmicrosoft.com/oauth2/v2.0/token
           scopes:
-            read: https://clx-awsapi-boto3-proxy-dev.test-org.com/.default
+            read: https://clx-awsapi-boto3-proxy-dev.example.com/.default
 
 security:
   - oauth2: [read]

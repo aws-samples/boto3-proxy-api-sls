@@ -112,7 +112,7 @@ class TestHelpers(TestCase):
         from utils.helpers import is_region_valid
         ec2_client = MockEC2Client()
         is_region_valid(ec2_client, "us-east-1")
-        self.assertRaises(InvalidRegionException, is_region_valid, ec2_client, "test-org")
+        self.assertRaises(InvalidRegionException, is_region_valid, ec2_client, "example")
 
     def test_lambda_returns(self):
         """Test the lambda returns method"""
