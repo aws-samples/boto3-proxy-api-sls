@@ -10,7 +10,7 @@ The values represent the actual Boto3 client's function name for the service.
 * If the parameter entry is missing, "invalid service" error message will be returned
 
 ## Specific use-case implemented in this project: 
-A baseline set of VPC security groups can be deployed by a AWS Network Firewall policy from a central management account, and this Network Firewall policy can be applied to all workload accounts so a set of baseline security group rules is deployed in all workload accounts. 
+A baseline set of VPC security group rules can be deployed by a AWS Firewall Manager policy from a central management account, and this Firewall Manager policy can be applied to all workload accounts so a set of baseline security group rules is deployed to all workload accounts. 
 Application teams/users may require additional security group rule(s) or exceptions to the baseline security groups rules for some applications in specific workload accounts.
 This API provides automation of creating additional or exception inbound or outbound security group rules in any given account once the rule is approved.
 
